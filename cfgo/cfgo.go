@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"path"
 	"os"
-	"github.com/fikisipi/cloudflare-go/structs"
+	"github.com/fikisipi/cloudflare-go/cfgo/structs"
 )
 
 type Request struct {
@@ -20,6 +20,8 @@ type Request struct {
 
 type Response = structs.Response
 
+// Used to chain .SetStatus(), .AddHeader(), etc.
+// together when creating a Response.
 func BuildResponse() Response {
 	reply := new(structs.RawResponse)
 

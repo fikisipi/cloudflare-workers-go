@@ -1,9 +1,9 @@
 package main
 
 import (
- "github.com/fikisipi/cloudflare-go"
  "fmt"
  "strings"
+ "github.com/fikisipi/cloudflare-go/cfgo"
 )
 
 func HomeDemo(req *cfgo.Request) cfgo.Response {
