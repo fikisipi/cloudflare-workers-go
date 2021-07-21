@@ -1,0 +1,17 @@
+name = ""
+type = "javascript"
+webpack_config = "webpack.config.js"
+
+account_id = ""
+workers_dev = true
+route = ""
+zone_id = ""
+
+[wasm_modules]
+WASM_MODULE = "worker/module.wasm"
+
+[build]
+command = "rollup -c"
+
+[build.upload]
+format = "service-worker"

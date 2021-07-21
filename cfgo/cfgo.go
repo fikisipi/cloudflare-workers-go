@@ -21,7 +21,10 @@ type Request struct {
 type Response = structs.Response
 
 // Used to chain .SetStatus(), .AddHeader(), etc.
-// together when creating a Response.
+// together when creating a Response. Example:
+//   return BuildResponse().SetStatus(200).SetBody("Hello").Build()
+// The final .Build() is not mandatory, it's just for
+// reducing ambiguity about the return type.
 func BuildResponse() Response {
 	reply := new(structs.RawResponse)
 
