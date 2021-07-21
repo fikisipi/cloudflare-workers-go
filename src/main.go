@@ -22,7 +22,7 @@ func HomeDemo(req *cfgo.Request) cfgo.Response {
  return cfgo.BuildResponse().SetBody(out).Build()
 }
 
-func OriginDemo(req *cfgo.Request) cfgo.Response {
+func FetchDemo(req *cfgo.Request) cfgo.Response {
  const origin = "https://welcome.developers.workers.dev"
  const replaceStr = "Welcome to a serverless execution environment"
 
@@ -34,6 +34,6 @@ func OriginDemo(req *cfgo.Request) cfgo.Response {
 
 func main() {
  cfgo.Router.Add("/", HomeDemo)
- cfgo.Router.Add("/fetch-demo", OriginDemo)
+ cfgo.Router.Add("/fetch-demo", FetchDemo)
  cfgo.Router.Run()
 }

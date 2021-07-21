@@ -75,20 +75,29 @@ func Fetch(url string, method string, headers map[string]string, requestBody Fet
 	return (<- out)
 }
 
-type Handler struct {
+type RouteHandler struct {
 	callbacks map[string]Callback
 }
 
 type Callback func(*Request) Response
 
-func (h *Handler) Add(s string, fn Callback) {
+// Adds a route, specified by a path and a callback.
+//   Router.Add("/yourPath/*", myFunc)
+// where myFunc is a Callback accepting a Request. The path
+// argument supports wildcards.
+//
+// Note: The route list  is ordered, and the
+// first route that matches the request is used.
+func (h *RouteHandler) Add(routePath string, routeCallback Callback) {
 	if(h.callbacks == nil) {
 		h.callbacks = make(map[string]Callback)
 	}
-	h.callbacks[s] = fn
+	h.callbacks[routePath] = routeCallback
 }
 
-func (h *Handler) Run() {
+// Dispatches the current Request to the first matching route
+// added by Add()
+func (h *RouteHandler) Run() {
 	responseCallback := js.Global().Call("_getCallback")
 	if len(os.Args) != 2 {
 		println("ERROR: subscribe() must be called with one arg")
@@ -117,4 +126,4 @@ func (h *Handler) Run() {
 	responseCallback.Invoke(result)
 }
 
-var Router = Handler{}
+var Router = RouteHandler{}
