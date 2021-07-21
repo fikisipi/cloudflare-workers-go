@@ -1,6 +1,5 @@
 name = "{{project-name}}"
 type = "javascript"
-webpack_config = "webpack.config.js"
 
 account_id = ""
 workers_dev = true
