@@ -1,11 +1,11 @@
-package flarego
+package cfgo
 
 import (
 	"syscall/js"
 	"encoding/json"
 	"path"
 	"os"
-	"flarego/structs"
+	"github.com/fikisipi/cloudflare-go/structs"
 )
 
 type Request struct {
