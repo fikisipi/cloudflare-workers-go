@@ -1,15 +1,26 @@
-# 👷 `worker-template` Hello World
+# 👷 CloudFlare Workers in Go
 
-A template for kick starting a Cloudflare worker project.
+`cfgo` (<a href="https://workers.cloudflare.com/">CloudFlare Workers</a> in Go) uses WebAssembly to bring
+Go projects to the Workers.
 
-[`index.js`](https://github.com/cloudflare/worker-template/blob/master/index.js) is the content of the Workers script.
-
-#### Wrangler
-
-To generate using [wrangler](https://github.com/cloudflare/wrangler)
+To set up a project, install [CloudFlare Wrangler](https://github.com/cloudflare/wrangler) and run:
 
 ```
-wrangler generate projectname https://github.com/cloudflare/worker-template
+wrangler generate yourapp https://github.com/fikisipi/cloudflare-workers-go
 ```
+### 🚴 Example and deployment
+A demo with request handling is available in  `src/main.go`.
 
-Further documentation for Wrangler can be found [here](https://developers.cloudflare.com/workers/tooling/wrangler).
+Run it using `wrangler dev`. To deploy
+live, use `wrangler publish`.
+
+### 🚧️ TODO
+* [x] Event/Request handling API
+* [x] fetch API
+* [ ] Handle non-latest (<1.16) `wasm_exec.js`
+* [ ] Key/Value API
+* [ ] 💥 reducing worker size
+   * tinygo?
+   * code stripping? (already doing AST optimization in `wasm_exec`)
+   * handwritten optimizations
+   * stdlib optimizations? `net/http/roundtrip_js.go`, `reflect/*.go`
