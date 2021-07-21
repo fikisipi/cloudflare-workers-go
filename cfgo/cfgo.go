@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"path"
 	"os"
-	"github.com/fikisipi/cloudflare-go/cfgo/structs"
+	"github.com/fikisipi/cloudflare-workers-go/cfgo/structs"
 )
 
 type Request struct {
@@ -45,8 +45,14 @@ func BodyForm(body map[string]string) FetchBody {
 	return &structs.FormBody{body}
 }
 
-// Fetches any URL inside the worker.
-// If you don't need headers or a request body, set them to `nil`.
+// Fetches any URL using the fetch() Web API. Unlike browsers,
+// CloudFlare workers miss some features like credentials.
+//
+// If you don't need headers or a request body, set them to nil:
+//    Fetch(myUrl, "GET", nil, nil)
+//
+// To create a POST/PUT body, use cfgo.BodyForm() or cfgo.BodyString():
+//    Fetch(myURL, "PUT", nil, cfgo.BodyForm(myDict))
 func Fetch(url string, method string, headers map[string]string, requestBody FetchBody) string {
 	if headers == nil {
 		headers = make(map[string]string)

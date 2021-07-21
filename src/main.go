@@ -3,7 +3,7 @@ package main
 import (
  "fmt"
  "strings"
- "github.com/fikisipi/cloudflare-go/cfgo"
+ "github.com/fikisipi/cloudflare-workers-go/cfgo"
 )
 
 func HomeDemo(req *cfgo.Request) cfgo.Response {
