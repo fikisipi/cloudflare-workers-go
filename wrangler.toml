@@ -11,7 +11,7 @@ zone_id = ""
 WASM_MODULE = "worker/module.wasm"
 
 [build]
-command = "rollup -c"
+command = "npm run build"
 
 [build.upload]
 format = "service-worker"
