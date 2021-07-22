@@ -4,25 +4,27 @@ import (
  "fmt"
  "strings"
  "github.com/fikisipi/cloudflare-workers-go/cfgo"
+ "math/rand"
+ "strconv"
 )
 
-func HomeDemo(req *cfgo.Request) cfgo.Response {
+func HomeDemo(req cfgo.Request) cfgo.Response {
  out := fmt.Sprintf(`
   ⚡ This is the home demo.
   ⚡ for the fetch demo, curl /fetch-demo
   ----------------------
   Pathname: %s
-  Query params: %s`, req.Pathname, req.QueryParams)
+  Query params: %s
 
- out += "\n\n  Headers:\n\n"
- for k, v := range req.Headers {
-  out += fmt.Sprintf("  - %s: %s\n", k, v)
- }
+  Headers:%s`,
+  req.Pathname,
+  mapToStr(req.QueryParams, "%s=%s\n"),
+  mapToStr(req.Headers, "\n   - %s: %s"))
 
  return cfgo.BuildResponse().SetBody(out).Build()
 }
 
-func FetchDemo(req *cfgo.Request) cfgo.Response {
+func FetchDemo(req cfgo.Request) cfgo.Response {
  const origin = "https://welcome.developers.workers.dev"
  const replaceStr = "Welcome to a serverless execution environment"
 
@@ -35,5 +37,16 @@ func FetchDemo(req *cfgo.Request) cfgo.Response {
 func main() {
  cfgo.Router.Add("/", HomeDemo)
  cfgo.Router.Add("/fetch-demo", FetchDemo)
+ cfgo.Router.Add("/why", func(request cfgo.Request) cfgo.Response {
+   return cfgo.BuildResponse().SetBody(strconv.Itoa(rand.Int()))
+ })
  cfgo.Router.Run()
+}
+
+func mapToStr(strMap map[string]string, format string) (output string) {
+ output = ""
+ for k, v := range strMap {
+  output += fmt.Sprintf(format, k, v)
+ }
+ return
 }

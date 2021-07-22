@@ -78,7 +78,7 @@ type RouteHandler struct {
 	callbacks map[string]Callback
 }
 
-type Callback func(*Request) Response
+type Callback func(Request) Response
 
 // Adds a route, specified by a path and a callback.
 //   Router.Add("/yourPath/*", myFunc)
@@ -103,34 +103,30 @@ func (h *RouteHandler) Run() {
 
 
 	blob, _ := fastjson.Parse(jsonRequest.String())
-	var request = new(Request)
+	var request Request
 	request.Pathname = string(blob.GetStringBytes("Pathname"))
 	request.Body = string(blob.GetStringBytes("Body"))
 	request.URL = string(blob.GetStringBytes("URL"))
 	request.Method = string(blob.GetStringBytes("Method"))
 	request.Hostname = string(blob.GetStringBytes("Hostname"))
-	hdr := blob.GetObject("Headers")
 
 	request.Headers = make(map[string]string)
 	request.QueryParams = make(map[string]string)
 
-
+	hdr := blob.GetObject("Headers")
 	hdr.Visit(func(key []byte, v *fastjson.Value) {
 		request.Headers[string(key)] = string(v.GetStringBytes())
 	})
 
+	qp := blob.GetObject("QueryParams")
+	qp.Visit(func(key []byte, v *fastjson.Value) {
+		request.QueryParams[string(key)] = string(v.GetStringBytes())
+	})
+
 	var response = BuildResponse()
 
-	_ = path.Match
-
-	/*
 	for pathStr, pathHandler := range h.callbacks {
 		if matched, _ := path.Match(pathStr, request.Pathname); matched {
-			response = pathHandler(request)
-		}
-	}*/
-	for pathStr, pathHandler := range h.callbacks {
-		if pathStr == request.Pathname {
 			response = pathHandler(request)
 		}
 	}

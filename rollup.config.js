@@ -7,15 +7,11 @@ import {terser} from 'rollup-plugin-terser';
 //import commonjs from '@rollup/plugin-commonjs';
 //import { visualizer } from 'rollup-plugin-visualizer';
 //import { SourceMapGenerator }  from 'source-map';
-import acorn from 'acorn'
-import walk from 'acorn-walk'
 //import { SourceMapGenerator, SourceNode, SourceMapConsumer } from 'source-map';
 import path from 'path'
 import {exec} from 'child_process'
-import * as recast from "recast";
 
 //const exec = promisify(execOld)
-
 import rewriteAst from "./wasm-ast";
 
 let compileWasm = () => {
@@ -28,7 +24,7 @@ let compileWasm = () => {
                 GOOS: 'js'
             }
             let goResult = await new Promise((resolve, reject) => {
-                exec('C:\\Users\\Filip\\go\\tinygo\\bin\\tinygo build -o ../worker/module.wasm', {
+                exec('tinygo build -o ../worker/module.wasm', {
                     cwd: process.cwd() + '/src',
                     env: arch
                 }, (err, stdout, stderr) => {
@@ -60,7 +56,12 @@ export default cmd => {
             //resolve(),
             rewriteAst(),
             compileWasm(),
-            terser({compress: {passes: 10}, ecma: 2015, format: {ecma: 2015, comments: false, indent_level: 0}}),
+            terser({
+                compress: {
+                    passes: 10,
+                    global_defs: {VERSION: 'tinygo'}
+                }, ecma: 2015, format: {ecma: 2015, comments: false, indent_level: 0}
+            }),
             //visualizer({sourcemap: true})
         ]
     }

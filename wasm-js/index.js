@@ -1,4 +1,4 @@
-import wasmGo from './tinygo/wasm_exec.js'
+import wasmGo from './tinygo-0.19/wasm_exec.js'
 
 const WASM_GET_CALLBACK = '_getCallback';
 const WASM_FETCH = '_cfFetch';
