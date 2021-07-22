@@ -33,22 +33,26 @@ function golang() {
                 sourceFileName: file
             })
 
+			const reverse = (arr) => arr.slice().reverse();
             walk.fullAncestor(ast.program, (node, state, parent) => {
                 if (node.type == 'MemberExpression') {
                     const snip = code.substring(node.start, node.end)
+					let name1, name2;
+					if(node.object.name) name1 = node.object.name;
+					if(node.property.name) name2 = node.property.name;
+
 					if(node.object.name == 'global' && node.property.name == 'performance') {
-						parent.reverse()
+						parent = reverse(parent)
 						if(parent[2].type == 'IfStatement') {
 							parent[3].body = parent[3].body.filter(x => x != parent[2])
 						}
 					}
-                    if (snip === `WebAssembly.instantiate`) {
-                        parent.reverse()
+                    if (`${name1}.${name2}`=== `WebAssembly.instantiate`) {
+						parent = reverse(parent)
                         const if_i = parent.findIndex(x => x.type == 'IfStatement');
                         const ifStatement = parent[if_i]
                         const parentStatement = parent[if_i + 1]
                         parentStatement.body = parentStatement.body.filter(x => x != ifStatement)
-						parent.reverse()
                     }
                 }
             })
