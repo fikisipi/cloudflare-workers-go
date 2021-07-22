@@ -19,10 +19,16 @@ const serializeReq = (request) => {
     return JSON.stringify(reqObj)
 }
 
-const callbackQueue = [];
+const dataQueue = [];
 
-global[WASM_GET_CALLBACK] = () => {
-    return callbackQueue.pop();
+global['_doHandShake'] = () => {
+    const { requestBlob, responseFunction } = dataQueue.pop();
+    return { requestBlob, responseFunction };
+}
+
+const putHandshake = (requestBlob, responseFunction) => {
+    const handshake = {requestBlob, responseFunction};
+    dataQueue.push(handshake);
 }
 
 global[WASM_FETCH] = (url, method, headers, body, cb) => {
@@ -47,20 +53,16 @@ global[WASM_FETCH] = (url, method, headers, body, cb) => {
     return true
 }
 
-const putCallback = (fn) => {
-    callbackQueue.push(fn);
-}
-
 addEventListener('fetch', ev => {
     const requestBlob = serializeReq(ev.request)
     const programOutput = new Promise((resolve, reject) => {
-        putCallback((str) => {
-            resolve(str)
-        });
+        putHandshake(requestBlob, (response) => {
+            resolve(response)
+        })
     });
 
     const go = new wasmGo.Go()
-    go.argv.push(requestBlob)
+   // go.argv.push(requestBlob)
 
     let instance = new WebAssembly.Instance(WASM_MODULE, go.importObject)
 

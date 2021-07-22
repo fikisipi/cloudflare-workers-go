@@ -1,4 +1,4 @@
-name = "{{project-name}}"
+name = "myproject"
 type = "javascript"
 
 account_id = ""
