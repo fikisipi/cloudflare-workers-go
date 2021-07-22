@@ -20,7 +20,7 @@ function golang() {
     return {
         name: 'go-transform',
         transform(code, file) {
-            if (file.indexOf('wasm.js') == -1) return;
+            if (file.indexOf('wasm_') == -1) return;
 
             const acornParser = {
                 parse(source) {
@@ -36,16 +36,26 @@ function golang() {
             walk.fullAncestor(ast.program, (node, state, parent) => {
                 if (node.type == 'MemberExpression') {
                     const snip = code.substring(node.start, node.end)
+					if(node.object.name == 'global' && node.property.name == 'performance') {
+						parent.reverse()
+						if(parent[2].type == 'IfStatement') {
+							parent[3].body = parent[3].body.filter(x => x != parent[2])
+						}
+					}
                     if (snip === `WebAssembly.instantiate`) {
                         parent.reverse()
                         const if_i = parent.findIndex(x => x.type == 'IfStatement');
                         const ifStatement = parent[if_i]
                         const parentStatement = parent[if_i + 1]
                         parentStatement.body = parentStatement.body.filter(x => x != ifStatement)
+						parent.reverse()
                     }
                 }
             })
-            return recast.print(ast).code
+            return recast.print(ast).code + `
+			global.performance = { now: () => Date.now() }
+			export default { Go: global.Go }
+			`;
             return
         }
     };
