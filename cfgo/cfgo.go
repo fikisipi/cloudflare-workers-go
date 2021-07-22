@@ -2,10 +2,9 @@ package cfgo
 
 import (
 	"syscall/js"
-	"encoding/json"
 	"path"
-	"os"
 	"github.com/fikisipi/cloudflare-workers-go/cfgo/structs"
+	"github.com/valyala/fastjson"
 )
 
 type Request struct {
@@ -68,7 +67,7 @@ func Fetch(url string, method string, headers map[string]string, requestBody Fet
 	var cb js.Func
 	cb = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		out <- args[0].String()
-		cb.Release()
+		// cb.Release()
 		return 1
 	})
 	js.Global().Call("_cfFetch", url, method, headersJs, bodyJs, cb)
@@ -98,28 +97,56 @@ func (h *RouteHandler) Add(routePath string, routeCallback Callback) {
 // Dispatches the current Request to the first matching route
 // added by Add()
 func (h *RouteHandler) Run() {
-	responseCallback := js.Global().Call("_getCallback")
-	if len(os.Args) != 2 {
-		println("ERROR: subscribe() must be called with one arg")
-		return
-	}
-	jsonRequest := os.Args[1]
+	handshakeData := js.Global().Call("_doHandShake")
+	jsonRequest := handshakeData.Get("requestBlob")
+	responseCallback := handshakeData.Get("responseFunction")
 
+
+	blob, _ := fastjson.Parse(jsonRequest.String())
 	var request = new(Request)
-	err := json.Unmarshal([]byte(jsonRequest), request)
-	if err != nil {
-		return
-	}
+	request.Pathname = string(blob.GetStringBytes("Pathname"))
+	request.Body = string(blob.GetStringBytes("Body"))
+	request.URL = string(blob.GetStringBytes("URL"))
+	request.Method = string(blob.GetStringBytes("Method"))
+	request.Hostname = string(blob.GetStringBytes("Hostname"))
+	hdr := blob.GetObject("Headers")
+
+	request.Headers = make(map[string]string)
+	request.QueryParams = make(map[string]string)
+
+
+	hdr.Visit(func(key []byte, v *fastjson.Value) {
+		request.Headers[string(key)] = string(v.GetStringBytes())
+	})
 
 	var response = BuildResponse()
 
+	_ = path.Match
+
+	/*
 	for pathStr, pathHandler := range h.callbacks {
 		if matched, _ := path.Match(pathStr, request.Pathname); matched {
 			response = pathHandler(request)
 		}
+	}*/
+	for pathStr, pathHandler := range h.callbacks {
+		if pathStr == request.Pathname {
+			response = pathHandler(request)
+		}
 	}
 
-	responseBytes, err := json.Marshal(response)
+	rawResp := response.(*structs.RawResponse)
+	arena := fastjson.Arena{}
+	responseObj := arena.NewObject()
+	responseObj.Set("StatusCode", arena.NewNumberInt(rawResp.StatusCode))
+	responseObj.Set("Body", arena.NewString(rawResp.Body))
+	headers := arena.NewObject()
+	for k, v := range rawResp.Headers {
+		headers.Set(k, arena.NewString(v))
+	}
+	responseObj.Set("Headers", headers)
+
+	responseBytes := responseObj.MarshalTo(nil)
 	responseStr := string(responseBytes)
 	result := responseStr
 

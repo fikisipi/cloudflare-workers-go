@@ -16,50 +16,7 @@ import * as recast from "recast";
 
 //const exec = promisify(execOld)
 
-function golang() {
-    return {
-        name: 'go-transform',
-        transform(code, file) {
-            if (file.indexOf('wasm_') == -1) return;
-
-            const acornParser = {
-                parse(source) {
-                    return acorn.parse(source, {ecmaVersion: 2020, sourceType: 'module', locations: true});
-                }
-            };
-
-            const ast = recast.parse(code, {
-                parser: acornParser,
-                sourceFileName: file
-            })
-
-            walk.fullAncestor(ast.program, (node, state, parent) => {
-                if (node.type == 'MemberExpression') {
-                    const snip = code.substring(node.start, node.end)
-					if(node.object.name == 'global' && node.property.name == 'performance') {
-						parent.reverse()
-						if(parent[2].type == 'IfStatement') {
-							parent[3].body = parent[3].body.filter(x => x != parent[2])
-						}
-					}
-                    if (snip === `WebAssembly.instantiate`) {
-                        parent.reverse()
-                        const if_i = parent.findIndex(x => x.type == 'IfStatement');
-                        const ifStatement = parent[if_i]
-                        const parentStatement = parent[if_i + 1]
-                        parentStatement.body = parentStatement.body.filter(x => x != ifStatement)
-						parent.reverse()
-                    }
-                }
-            })
-            return recast.print(ast).code + `
-			global.performance = { now: () => Date.now() }
-			export default { Go: global.Go }
-			`;
-            return
-        }
-    };
-}
+import rewriteAst from "./wasm-ast";
 
 let compileWasm = () => {
     return {
@@ -71,7 +28,7 @@ let compileWasm = () => {
                 GOOS: 'js'
             }
             let goResult = await new Promise((resolve, reject) => {
-                exec('go build -o ../worker/module.wasm', {
+                exec('C:\\Users\\Filip\\go\\tinygo\\bin\\tinygo build -o ../worker/module.wasm', {
                     cwd: process.cwd() + '/src',
                     env: arch
                 }, (err, stdout, stderr) => {
@@ -101,7 +58,7 @@ export default cmd => {
         },
         plugins: [
             //resolve(),
-            golang(),
+            rewriteAst(),
             compileWasm(),
             terser({compress: {passes: 10}, ecma: 2015, format: {ecma: 2015, comments: false, indent_level: 0}}),
             //visualizer({sourcemap: true})
