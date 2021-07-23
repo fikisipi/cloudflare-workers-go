@@ -10,7 +10,6 @@ on:
 
 jobs:
   godoc:
-    continue-on-error: true
     runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -25,7 +24,7 @@ jobs:
       - uses: amondnet/vercel-action@v20.0.0
         with:
           vercel-token: ${{ secrets.WEB_TOKEN }}
-          vercel-args: -c
+          vercel-args: -c --prod
           vercel-project-id: prj_Dme7nJ8rpmVzGMAI8WpNsp95QfJo
           vercel-org-id: ${{ secrets.WEB_ORG_ID }}
     
