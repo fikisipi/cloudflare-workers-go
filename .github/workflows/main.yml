@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
+    - uses: actions/setup-node@v2
     - uses: actions/setup-go@v1
       with:
         go-version: '1.16.2' # The Go version to download (if necessary) and use.
@@ -22,3 +23,7 @@ jobs:
     - run: cd src && GOARCH=wasm GOOS=js go build -o app.wasm
     - run: echo WASM filesize
     - run: cd src && ls -l --block-size=K app.wasm 
+    - run: cd src && rm app.wasm
+    - run: npm install -g @cloudflare/wrangler
+    - run: wrangler preview --headless
+
