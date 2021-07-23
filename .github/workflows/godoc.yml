@@ -1,5 +1,3 @@
-# This is a basic workflow to help you get started with Actions
-
 name: godoc
 
 on:
@@ -12,7 +10,7 @@ on:
 
 jobs:
   godoc:
-    # The type of runner that the job will run on
+    continue-on-error: true
     runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -29,4 +27,5 @@ jobs:
           vercel-token: ${{ secrets.WEB_TOKEN }}
           vercel-args: -c
           vercel-project-id: prj_Dme7nJ8rpmVzGMAI8WpNsp95QfJo
+          vercel-org-id: ${{ secrets.WEB_ORG_ID }}
     
