@@ -4,26 +4,7 @@ import (
 	"syscall/js"
 	"path"
 	"github.com/fikisipi/cloudflare-workers-go/cfgo/structs"
-	"github.com/valyala/fastjson"
 )
-
-type Request *RequestStruct
-
-type Response = structs.Response
-
-// Used to chain .SetStatus(), .AddHeader(), etc.
-// together when creating a Response. Example:
-//   return BuildResponse().SetStatus(200).SetBody("Hello").Build()
-// The final .Build() is not mandatory, it's just for
-// reducing ambiguity about the return type.
-func ResponseNew(body string) Response {
-	reply := new(structs.RawResponse)
-
-	reply.Body = body
-	reply.StatusCode = 200
-	reply.Headers = make(map[string]string)
-	return reply
-}
 
 type FetchBody interface {
 	Get() js.Value
@@ -66,11 +47,11 @@ func Fetch(url string, method string, headers map[string]string, requestBody Fet
 	return (<- out)
 }
 
-type RouteHandler struct {
-	callbacks map[string]Callback
+type routeHandler struct {
+	callbacks map[string]callback
 }
 
-type Callback func(Request) Response
+type callback func(*Request)
 
 // Adds a route, specified by a path and a callback.
 //   Router.Add("/yourPath/*", myFunc)
@@ -79,65 +60,39 @@ type Callback func(Request) Response
 //
 // Note: The route list  is ordered, and the
 // first route that matches the request is used.
-func (h *RouteHandler) Add(routePath string, routeCallback Callback) {
+func (h *routeHandler) Add(routePath string, routeCallback func(*Request)) {
 	if(h.callbacks == nil) {
-		h.callbacks = make(map[string]Callback)
+		h.callbacks = make(map[string]callback)
 	}
 	h.callbacks[routePath] = routeCallback
-}
-type JsonValue fastjson.Value
-func (jVal *JsonValue) String() string {
-	newval := (*fastjson.Value)(jVal)
-	return string(newval.GetStringBytes())
-}
-
-func GetKey(namespace string, key string) string {
-	result := <- asyncCall("kvGet", namespace, key)
-	if result.isError || result.out.IsNull() { return "" }
-	return result.out.String()
-}
-
-func PutKey(namespace string, key string, value string) {
-	<- asyncCall("kvPut", namespace, key, value)
-}
-
-func PutKeyExpiring(namespace string, key string, value string, seconds int) {
-	opts := make(map[string]interface{})
-	opts["expirationTtl"] = seconds
-	<- asyncCall("kvPut", namespace, key, value, opts)
-}
-
-func ListKeyValues(namespace string, prefix string) map[string]string{
-	res := <- asyncCall("kvListValues", namespace, prefix)
-	sMap := make(map[string]string)
-	if res.isError { return sMap }
-	return structs.GetJsMap(res.out)
 }
 
 // Dispatches the current Request to the first matching route
 // added by Add()
-func (h *RouteHandler) Run() {
+func (h *routeHandler) Run() {
 	handshakeData := js.Global().Call("_doHandShake")
 	reqBlob := handshakeData.Get("requestBlob")
 	responseCallback := handshakeData.Get("responseFunction")
 
 	request := makeRequestFromJs(reqBlob)
 
-	var response = ResponseNew("Route not found: " + request.Pathname).SetStatus(404)
+	var response = buildResponse("Route not found: " + request.Pathname, SetStatus(404))
 
 	for pathStr, pathHandler := range h.callbacks {
 		if matched, _ := path.Match(pathStr, request.Pathname); matched {
-			response = pathHandler(request)
+			pathHandler(request)
+
+			if request._calledRespond {
+				response = request._response
+			} else {
+				response = buildResponse("")
+			}
 		}
 	}
 
-	rawResp := response.(*structs.RawResponse)
-	responseObj := make(map[string]interface{})
-	responseObj["StatusCode"] = rawResp.StatusCode
-	responseObj["Body"] = rawResp.Body
-	responseObj["Headers"] = structs.CreateJsMap(rawResp.Headers)
+	rawResp := response.serialize()
 
-	responseCallback.Invoke(responseObj)
+	responseCallback.Invoke(rawResp)
 }
 
-var Router = RouteHandler{}
+var Router = routeHandler{}

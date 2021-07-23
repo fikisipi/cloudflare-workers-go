@@ -5,29 +5,29 @@ import (
 	"github.com/fikisipi/cloudflare-workers-go/cfgo/structs"
 )
 
-type CloudflareInfo struct {
-	Asn string
-	Colo string
-	Country string
-	HttpProtocol string
+type RequestCFInfo struct {
+	Asn             string
+	Colo            string
+	Country         string
+	HttpProtocol    string
 	RequestPriority string
-	TLSCipher string
-	TLSClientAuth string
-	TLSVersion string
-	City string
-	Continent string
-	Latitude string
-	Longitude string
-	PostalCode string
-	MetroCode string
-	Region string
-	RegionCode string
-	Timezone string
+	TLSCipher       string
+	TLSClientAuth   string
+	TLSVersion      string
+	City            string
+	Continent       string
+	Latitude        string
+	Longitude       string
+	PostalCode      string
+	MetroCode       string
+	Region          string
+	RegionCode      string
+	Timezone        string
 }
 
-func makeCfFromMap(data map[string]string) CloudflareInfo {
+func makeCfFromMap(data map[string]string) RequestCFInfo {
 	// Uh, we could use Reflection or fastjson here...
-	return CloudflareInfo{
+	return RequestCFInfo{
 		data["asn"], data["colo"], data["country"], data["httpProtocol"],
 		data["requestPriority"], data["tlsCipher"], data["tlsClientAuth"],
 		data["tlsVersion"], data["city"], data["continent"], data["latitude"],
@@ -36,19 +36,26 @@ func makeCfFromMap(data map[string]string) CloudflareInfo {
 	}
 }
 
-type RequestStruct struct {
-	Body string
-	Headers map[string]string
-	QueryParams map[string]string
-	URL string
-	Hostname string
-	Pathname string
-	Method string
-	Cf CloudflareInfo
+type Request struct {
+	Body           string
+	Headers        map[string]string
+	QueryParams    map[string]string
+	URL            string
+	Hostname       string
+	Pathname       string
+	Method         string
+	Cf             RequestCFInfo
+	_response      *responseStruct
+	_calledRespond bool
 }
 
-func makeRequestFromJs(reqBlob js.Value) *RequestStruct{
-	var request = new(RequestStruct)
+func (r *Request) Respond(body string, options ...ResponseOption) {
+	r._calledRespond = true
+	r._response = buildResponse(body, options...)
+}
+
+func makeRequestFromJs(reqBlob js.Value) *Request {
+	var request = new(Request)
 
 	request.Hostname = reqBlob.Get("Hostname").String()
 	request.Body = reqBlob.Get("Body").String()
@@ -61,5 +68,9 @@ func makeRequestFromJs(reqBlob js.Value) *RequestStruct{
 
 	cfMap := structs.GetJsMap(reqBlob.Get("Cf"))
 	request.Cf = makeCfFromMap(cfMap)
+
+	request._response = new(responseStruct)
+	request._calledRespond = false
+
 	return request
 }

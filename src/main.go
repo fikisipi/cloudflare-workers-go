@@ -6,9 +6,7 @@ import (
  "github.com/fikisipi/cloudflare-workers-go/cfgo"
 )
 
-const KV_NAMESPACE = "wrangler1_demo"
-
-func HomeDemo(req cfgo.Request) cfgo.Response {
+func HomeDemo(req *cfgo.Request) {
  out := fmt.Sprintf(`
   ⚡ This is the home demo.
   ⚡ for the fetch demo, curl /fetch-demo
@@ -24,24 +22,26 @@ func HomeDemo(req cfgo.Request) cfgo.Response {
   req.Cf.Continent,
   printMap(req.Headers, "\n   - %s: %s"))
 
- return cfgo.ResponseNew(out)
+ req.Respond(out)
 }
 
-func FetchDemo(req cfgo.Request) cfgo.Response {
+func FetchDemo(req *cfgo.Request) {
  const origin = "https://welcome.developers.workers.dev"
  const replaceStr = "Welcome to a serverless execution environment"
 
  out := cfgo.Fetch(origin, "GET", nil, nil)
  out = strings.Replace(out, replaceStr, "<p>Welcome <h3>to...</h3>" +
  "<h2>Golang!</h2></p> <br/> ", 1)
- return cfgo.ResponseNew(out).AddHeader("content-type", "text/html").Build()
+ req.Respond(out, cfgo.SetHeader("content-type", "text/html"))
 }
 
-var KeyValueDemo = func(request cfgo.Request) cfgo.Response {
- if v, has := request.QueryParams["value"]; has {
-  cfgo.PutKey(KV_NAMESPACE, request.QueryParams["key"], v)
+var KV = cfgo.KV("PROBA")
+
+var KeyValueDemo = func(req *cfgo.Request) {
+ if v, has := req.QueryParams["value"]; has {
+  KV.PutKey(req.QueryParams["key"], v)
  }
- currentVals := printMap(cfgo.ListKeyValues(KV_NAMESPACE, ""), " - proba[%s] = %s\n")
+ currentVals := printMap(KV.ListKeyValues(""), " - proba[%s] = %s\n")
  resp := `
   <pre>` + currentVals + `
   ---
@@ -53,7 +53,7 @@ var KeyValueDemo = func(request cfgo.Request) cfgo.Response {
   </form>
   `
 
- return cfgo.ResponseNew(resp).AddHeader("content-type", "text/html")
+ req.Respond(resp, cfgo.SetHeader("content-type", "text/html"))
 }
 
 func main() {
