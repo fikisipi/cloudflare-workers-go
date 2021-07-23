@@ -7,15 +7,7 @@ import (
 	"github.com/valyala/fastjson"
 )
 
-type Request struct {
-	Body string
-	Headers map[string]string
-	QueryParams map[string]string
-	URL string
-	Hostname string
-	Pathname string
-	Method string
-}
+type Request *RequestStruct
 
 type Response = structs.Response
 
@@ -129,15 +121,7 @@ func (h *RouteHandler) Run() {
 	reqBlob := handshakeData.Get("requestBlob")
 	responseCallback := handshakeData.Get("responseFunction")
 
-	var request Request
-	request.Hostname = reqBlob.Get("Hostname").String()
-	request.Body = reqBlob.Get("Body").String()
-	request.URL = reqBlob.Get("URL").String()
-	request.Method = reqBlob.Get("Method").String()
-	request.Pathname = reqBlob.Get("Pathname").String()
-
-	request.Headers = structs.GetJsMap(reqBlob.Get("Headers"))
-	request.QueryParams = structs.GetJsMap(reqBlob.Get("QueryParams"))
+	request := makeRequestFromJs(reqBlob)
 
 	var response = ResponseNew("Route not found: " + request.Pathname).SetStatus(404)
 

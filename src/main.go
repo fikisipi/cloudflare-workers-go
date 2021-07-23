@@ -15,10 +15,13 @@ func HomeDemo(req cfgo.Request) cfgo.Response {
   ----------------------
   Pathname: %s
   Query params: %s
+  Your continent: %s
+
 
   Headers:%s`,
   req.Pathname,
   printMap(req.QueryParams, "%s=%s\n"),
+  req.Cf.Continent,
   printMap(req.Headers, "\n   - %s: %s"))
 
  return cfgo.ResponseNew(out)
