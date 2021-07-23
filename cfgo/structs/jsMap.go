@@ -16,3 +16,15 @@ func CreateJsMap(sMap map[string]string) js.Value {
 	}
 	return js.ValueOf(interfaceMap)
 }
+
+func GetJsMap(value js.Value) map[string]string {
+	m := make(map[string]string)
+	entries := js.Global().Get("Object").Call("entries", value)
+	for i := 0; i < entries.Length(); i++ {
+		kv := entries.Index(i)
+		key := kv.Index(0).String()
+		value := kv.Index(1).String()
+		m[key] = value
+	}
+	return m
+}

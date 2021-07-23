@@ -24,7 +24,8 @@ let compileWasm = () => {
                 GOOS: 'js'
             }
             let goResult = await new Promise((resolve, reject) => {
-                exec('tinygo build -o ../worker/module.wasm', {
+                console.log(`${GOEXEC} build → worker/module.wasm`)
+                exec(`${GOEXEC} build -o ../worker/module.wasm`, {
                     cwd: process.cwd() + '/src',
                     env: arch
                 }, (err, stdout, stderr) => {
@@ -37,10 +38,12 @@ let compileWasm = () => {
                         resolve()
                 })
             })
-            console.log('go build → worker/module.wasm')
         }
     }
 }
+
+const GOEXEC = process.env.GO || 'go'
+const GOVERSION = (GOEXEC === 'tinygo' ? 'tinygo-0.19' : 'go-1.16')
 
 export default cmd => {
     return {
@@ -54,7 +57,7 @@ export default cmd => {
         },
         plugins: [
             //resolve(),
-            rewriteAst(),
+            rewriteAst(GOVERSION),
             compileWasm(),
             terser({
                 compress: {

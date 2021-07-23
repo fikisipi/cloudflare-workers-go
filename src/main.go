@@ -4,9 +4,9 @@ import (
  "fmt"
  "strings"
  "github.com/fikisipi/cloudflare-workers-go/cfgo"
- "math/rand"
- "strconv"
 )
+
+const KV_NAMESPACE = "wrangler1_demo"
 
 func HomeDemo(req cfgo.Request) cfgo.Response {
  out := fmt.Sprintf(`
@@ -18,10 +18,10 @@ func HomeDemo(req cfgo.Request) cfgo.Response {
 
   Headers:%s`,
   req.Pathname,
-  mapToStr(req.QueryParams, "%s=%s\n"),
-  mapToStr(req.Headers, "\n   - %s: %s"))
+  printMap(req.QueryParams, "%s=%s\n"),
+  printMap(req.Headers, "\n   - %s: %s"))
 
- return cfgo.BuildResponse().SetBody(out).Build()
+ return cfgo.ResponseNew(out)
 }
 
 func FetchDemo(req cfgo.Request) cfgo.Response {
@@ -31,19 +31,37 @@ func FetchDemo(req cfgo.Request) cfgo.Response {
  out := cfgo.Fetch(origin, "GET", nil, nil)
  out = strings.Replace(out, replaceStr, "<p>Welcome <h3>to...</h3>" +
  "<h2>Golang!</h2></p> <br/> ", 1)
- return cfgo.BuildResponse().AddHeader("content-type", "text/html").SetBody(out).Build()
+ return cfgo.ResponseNew(out).AddHeader("content-type", "text/html").Build()
+}
+
+var KeyValueDemo = func(request cfgo.Request) cfgo.Response {
+ if v, has := request.QueryParams["value"]; has {
+  cfgo.PutKey(KV_NAMESPACE, request.QueryParams["key"], v)
+ }
+ currentVals := printMap(cfgo.ListKeyValues(KV_NAMESPACE, ""), " - proba[%s] = %s\n")
+ resp := `
+  <pre>` + currentVals + `
+  ---
+  </pre>
+  <form>
+  <input name="key" placeholder="Key" /> 
+  <input name="value" placeholder="Value" /> <br/>
+  <input type="submit" value="Set" />
+  </form>
+  `
+
+ return cfgo.ResponseNew(resp).AddHeader("content-type", "text/html")
 }
 
 func main() {
  cfgo.Router.Add("/", HomeDemo)
  cfgo.Router.Add("/fetch-demo", FetchDemo)
- cfgo.Router.Add("/why", func(request cfgo.Request) cfgo.Response {
-   return cfgo.BuildResponse().SetBody(strconv.Itoa(rand.Int()))
- })
+ cfgo.Router.Add("/kv", KeyValueDemo)
+
  cfgo.Router.Run()
 }
 
-func mapToStr(strMap map[string]string, format string) (output string) {
+func printMap(strMap map[string]string, format string) (output string) {
  output = ""
  for k, v := range strMap {
   output += fmt.Sprintf(format, k, v)

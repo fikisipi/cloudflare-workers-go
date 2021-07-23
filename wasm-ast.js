@@ -2,11 +2,14 @@ import acorn from "acorn";
 import * as recast from "recast";
 import walk from "acorn-walk";
 
-function rewriteAst() {
+function rewriteAst(goVersion) {
     return {
         name: 'go-transform',
         transform(code, file) {
-            if (file.indexOf('wasm_') == -1) return;
+            if (file.indexOf('index.js') !== -1) {
+                return code.replace("./go-1.16/wasm_exec.js", `./${goVersion}/wasm_exec.js`)
+            }
+            if (file.indexOf('wasm_') === -1) return;
 
             const acornParser = {
                 parse(source) {

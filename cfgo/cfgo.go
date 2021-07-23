@@ -24,9 +24,10 @@ type Response = structs.Response
 //   return BuildResponse().SetStatus(200).SetBody("Hello").Build()
 // The final .Build() is not mandatory, it's just for
 // reducing ambiguity about the return type.
-func BuildResponse() Response {
+func ResponseNew(body string) Response {
 	reply := new(structs.RawResponse)
 
+	reply.Body = body
 	reply.StatusCode = 200
 	reply.Headers = make(map[string]string)
 	return reply
@@ -93,37 +94,53 @@ func (h *RouteHandler) Add(routePath string, routeCallback Callback) {
 	}
 	h.callbacks[routePath] = routeCallback
 }
+type JsonValue fastjson.Value
+func (jVal *JsonValue) String() string {
+	newval := (*fastjson.Value)(jVal)
+	return string(newval.GetStringBytes())
+}
+
+func GetKey(namespace string, key string) string {
+	result := <- asyncCall("kvGet", namespace, key)
+	if result.isError || result.out.IsNull() { return "" }
+	return result.out.String()
+}
+
+func PutKey(namespace string, key string, value string) {
+	<- asyncCall("kvPut", namespace, key, value)
+}
+
+func PutKeyExpiring(namespace string, key string, value string, seconds int) {
+	opts := make(map[string]interface{})
+	opts["expirationTtl"] = seconds
+	<- asyncCall("kvPut", namespace, key, value, opts)
+}
+
+func ListKeyValues(namespace string, prefix string) map[string]string{
+	res := <- asyncCall("kvListValues", namespace, prefix)
+	sMap := make(map[string]string)
+	if res.isError { return sMap }
+	return structs.GetJsMap(res.out)
+}
 
 // Dispatches the current Request to the first matching route
 // added by Add()
 func (h *RouteHandler) Run() {
 	handshakeData := js.Global().Call("_doHandShake")
-	jsonRequest := handshakeData.Get("requestBlob")
+	reqBlob := handshakeData.Get("requestBlob")
 	responseCallback := handshakeData.Get("responseFunction")
 
-
-	blob, _ := fastjson.Parse(jsonRequest.String())
 	var request Request
-	request.Pathname = string(blob.GetStringBytes("Pathname"))
-	request.Body = string(blob.GetStringBytes("Body"))
-	request.URL = string(blob.GetStringBytes("URL"))
-	request.Method = string(blob.GetStringBytes("Method"))
-	request.Hostname = string(blob.GetStringBytes("Hostname"))
+	request.Hostname = reqBlob.Get("Hostname").String()
+	request.Body = reqBlob.Get("Body").String()
+	request.URL = reqBlob.Get("URL").String()
+	request.Method = reqBlob.Get("Method").String()
+	request.Pathname = reqBlob.Get("Pathname").String()
 
-	request.Headers = make(map[string]string)
-	request.QueryParams = make(map[string]string)
+	request.Headers = structs.GetJsMap(reqBlob.Get("Headers"))
+	request.QueryParams = structs.GetJsMap(reqBlob.Get("QueryParams"))
 
-	hdr := blob.GetObject("Headers")
-	hdr.Visit(func(key []byte, v *fastjson.Value) {
-		request.Headers[string(key)] = string(v.GetStringBytes())
-	})
-
-	qp := blob.GetObject("QueryParams")
-	qp.Visit(func(key []byte, v *fastjson.Value) {
-		request.QueryParams[string(key)] = string(v.GetStringBytes())
-	})
-
-	var response = BuildResponse()
+	var response = ResponseNew("Route not found: " + request.Pathname).SetStatus(404)
 
 	for pathStr, pathHandler := range h.callbacks {
 		if matched, _ := path.Match(pathStr, request.Pathname); matched {
