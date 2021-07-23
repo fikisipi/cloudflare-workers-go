@@ -1,0 +1,24 @@
+name: CI
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  Build-WASM:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - uses: actions/setup-go@v1
+      with:
+        go-version: '1.16.2' # The Go version to download (if necessary) and use.
+    - run: echo ✔️Installed Go
+    - run: go version
+    - run: echo Doing wasm build
+    - run: cd src && GOARCH=wasm GOOS=js go build -o app.wasm
