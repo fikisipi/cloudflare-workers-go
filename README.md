@@ -17,10 +17,12 @@ live, use `wrangler publish`.
 ### 🚧️ TODO
 * [x] Event/Request handling API
 * [x] fetch API
-* [ ] Handle non-latest (<1.16) `wasm_exec.js`
-* [ ] Key/Value API
+* [x] Handle wasm_exec from non-latest (<1.16) & tinygo 
+* [x] KV for Workers API
+   * TODO : add metadata and cursor pagination
+* [ ] WebSocket API
+* [ ] Support for streaming & bytes in fetch
 * [ ] 💥 reducing worker size
-   * tinygo?
    * code stripping? (already doing AST optimization in `wasm_exec`)
    * handwritten optimizations
    * stdlib optimizations? `net/http/roundtrip_js.go`, `reflect/*.go`
