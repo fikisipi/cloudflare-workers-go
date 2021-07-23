@@ -21,4 +21,4 @@ jobs:
     - run: go version
     - run: cd src && GOARCH=wasm GOOS=js go build -o app.wasm
     - run: echo WASM filesize
-    - run: ls -l --block-size=M app.wasm
+    - run: cd src && ls -l --block-size=M app.wasm
