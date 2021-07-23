@@ -1,7 +1,7 @@
-# 👷 CloudFlare Workers in Go
+# 👷 CloudFlare Workers in Go <img src="https://github.com/fikisipi/cloudflare-workers-go/actions/workflows/main.yml/badge.svg" />
 
-`cfgo` (<a href="https://workers.cloudflare.com/">CloudFlare Workers</a> in Go) uses WebAssembly to bring
-Go projects to the Workers.
+`cfgo` uses WebAssembly to run Go projects as CF Workers. It exposes the APIs,
+patches the missing runtime functions and glues the compiler to the CloudFlare tools.
 
 To set up a project, install [CloudFlare Wrangler](https://github.com/cloudflare/wrangler) and run:
 
