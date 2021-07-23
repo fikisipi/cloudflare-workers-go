@@ -68,7 +68,6 @@ func Fetch(url string, method string, headers map[string]string, requestBody Fet
 	var cb js.Func
 	cb = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		out <- args[0].String()
-		// cb.Release()
 		return 1
 	})
 	js.Global().Call("_cfFetch", url, method, headersJs, bodyJs, cb)
@@ -149,21 +148,12 @@ func (h *RouteHandler) Run() {
 	}
 
 	rawResp := response.(*structs.RawResponse)
-	arena := fastjson.Arena{}
-	responseObj := arena.NewObject()
-	responseObj.Set("StatusCode", arena.NewNumberInt(rawResp.StatusCode))
-	responseObj.Set("Body", arena.NewString(rawResp.Body))
-	headers := arena.NewObject()
-	for k, v := range rawResp.Headers {
-		headers.Set(k, arena.NewString(v))
-	}
-	responseObj.Set("Headers", headers)
+	responseObj := make(map[string]interface{})
+	responseObj["StatusCode"] = rawResp.StatusCode
+	responseObj["Body"] = rawResp.Body
+	responseObj["Headers"] = structs.CreateJsMap(rawResp.Headers)
 
-	responseBytes := responseObj.MarshalTo(nil)
-	responseStr := string(responseBytes)
-	result := responseStr
-
-	responseCallback.Invoke(result)
+	responseCallback.Invoke(responseObj)
 }
 
 var Router = RouteHandler{}

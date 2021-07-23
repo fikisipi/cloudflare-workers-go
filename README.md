@@ -1,6 +1,6 @@
-# 👷 CloudFlare Workers in Go <img src="https://github.com/fikisipi/cloudflare-workers-go/actions/workflows/main.yml/badge.svg" />
+# 👷 CloudFlare Workers for Go <img src="https://github.com/fikisipi/cloudflare-workers-go/actions/workflows/main.yml/badge.svg" />
 
-`cfgo` uses WebAssembly to run Go projects as CF Workers. It exposes the APIs,
+`cfgo` uses WebAssembly to run Go projects as CloudFlare Workers. It exposes the APIs,
 patches the missing runtime functions and glues the compiler to the CloudFlare tools.
 
 To set up a project, install [CloudFlare Wrangler](https://github.com/cloudflare/wrangler) and run:
@@ -8,11 +8,18 @@ To set up a project, install [CloudFlare Wrangler](https://github.com/cloudflare
 ```
 wrangler generate yourapp https://github.com/fikisipi/cloudflare-workers-go
 ```
-### 🚴 Example and deployment
-A demo with request handling is available in  `src/main.go`.
+### 🚴 Example deployment
+```
+~ wrangler login
+~ wrangler publish
+go build → worker/module.wasm
+created worker/main.js in 1.2s
+✨  Build completed successfully!
+✨  Successfully published your script to
+ https://myproject.myaccount.workers.dev
+```
+This runs the demos available in  `src/main.go`.
 
-Run it using `wrangler dev`. To deploy
-live, use `wrangler publish`.
 
 ### 🚧️ TODO
 * [x] Event/Request handling API
