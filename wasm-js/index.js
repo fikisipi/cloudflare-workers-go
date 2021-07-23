@@ -123,8 +123,8 @@ addEventListener('fetch', ev => {
         // Race between program output & Worker limit timeout
         const winner = await Promise.race([programOutput, invocation])
 
-        if (typeof winner == 'string') {
-            let responseObj = JSON.parse(winner)
+        if (typeof winner === 'object') {
+            let responseObj = winner
             const response = new Response(responseObj.Body,
                 {
                     status: responseObj.StatusCode, headers: new Headers(responseObj.Headers)
