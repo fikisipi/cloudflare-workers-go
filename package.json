@@ -11,6 +11,7 @@
   "license": "MIT",
   "dependencies": {
     "@rollup/plugin-node-resolve": "^13.0.2",
+    "@rollup/plugin-typescript": "^8.2.3",
     "acorn": "^8.4.1",
     "acorn-walk": "^8.1.1",
     "recast": "^0.20.4",

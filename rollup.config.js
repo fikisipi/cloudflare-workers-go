@@ -1,13 +1,6 @@
 //import resolve from '@rollup/plugin-node-resolve';
 import {terser} from 'rollup-plugin-terser';
-//import strip from '@rollup/plugin-strip';
-//import copy from 'rollup-plugin-copy';
-//import {minify} from 'html-minifier-terser';
-//import babel from '@rollup/plugin-babel';
-//import commonjs from '@rollup/plugin-commonjs';
-//import { visualizer } from 'rollup-plugin-visualizer';
-//import { SourceMapGenerator }  from 'source-map';
-//import { SourceMapGenerator, SourceNode, SourceMapConsumer } from 'source-map';
+import typeScript from '@rollup/plugin-typescript';
 import path from 'path'
 import {exec} from 'child_process'
 
@@ -47,7 +40,7 @@ const GOVERSION = (GOEXEC === 'tinygo' ? 'tinygo-0.19' : 'go-1.16')
 
 export default cmd => {
     return {
-        input: './wasm-js/index.js',
+        input: './wasm-js/index.ts',
         output: {
             file: 'worker/main.js',
             //format: 'es',
@@ -59,6 +52,7 @@ export default cmd => {
             //resolve(),
             rewriteAst(GOVERSION),
             compileWasm(),
+            typeScript({lib: [ "es2018", "dom", "esnext" ], target: "es2018"}),
             terser({
                 compress: {
                     passes: 10,

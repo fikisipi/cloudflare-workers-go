@@ -1,4 +1,23 @@
+// @ts-ignore
 import wasmGo from './go-1.16/wasm_exec.js'
+
+declare global {
+    class WebSocketPair {
+        client: WebSocket;
+        server: WebSocket;
+    }
+    interface ResponseInit {
+        webSocket?: WebSocket
+    }
+    interface URLSearchParams {
+        entries: () => Iterable<[string, string]>;
+    }
+    const WASM_MODULE: WebAssembly.Module;
+    interface CFEvent extends Event {
+        request: Request;
+        respondWith: (callback: Promise<any>) => any;
+    }
+}
 
 const supportedNamespaces = () => {
     return Reflect.ownKeys(global).filter(x => {
@@ -9,8 +28,10 @@ const supportedNamespaces = () => {
     });
 }
 
-const serializeReq = (request) => {
+const serializeReq = (request: CFRequest) => {
     const url = request.url;
+    let K: ReqCF = null
+    K.asn
     const parsed = new URL(url)
     const reqObj = {
         Body: request.body,
@@ -25,7 +46,43 @@ const serializeReq = (request) => {
     return reqObj;
 }
 
-const dataQueue = [];
+interface IncomingCF {
+    asn: string,
+    colo: string,
+    country: string,
+    httpProtocol: string,
+    requestPriority: string,
+    tlsCipher: string,
+    tlsClientAuth: string,
+    tlsVersion: string,
+    city: string,
+    continent: string,
+    latitude: string,
+    longitude: string,
+    postalCode: string,
+    metroCode: string,
+    region: string,
+    regionCode: string,
+    timezone: string,
+}
+
+interface CFRequestInit extends RequestInit {
+    cf: ReqCF
+}
+
+interface CFRequest extends Request {
+    constructor: (input: string|CFRequest, init: CFRequestInit) => void;
+    readonly cf: {
+
+    }
+}
+
+interface Handshake {
+    requestBlob: CFRequest,
+    responseCallback: () => any;
+}
+
+const handshakeQueue: Array<Handshake> = [];
 
 global['_doHandShake'] = () => {
     const { requestBlob, responseFunction } = dataQueue.pop();
@@ -40,7 +97,7 @@ const putHandshake = (requestBlob, responseFunction) => {
 const WASM_FETCH = '_cfFetch';
 global[WASM_FETCH] = (url, method, headers, body, cb) => {
     new Promise(async (resolve, reject) => {
-        const initObj = {method};
+        const initObj: RequestInit = {method};
         if (body != null) {
             if (typeof body == 'object') {
                 const formData = new FormData();
@@ -89,14 +146,15 @@ const golangFunctions = {
 
 const GOLANG_SCOPE = '_golangScope';
 global[GOLANG_SCOPE] = Object.fromEntries([...Object.entries(golangFunctions)].map((kv) => {
-    const name = kv[0];
-    const asyncFun = kv[1];
+    const name: string = kv[0];
+    const asyncFun: Function = kv[1];
 
     return [name, (...args) => {
         const [callback, ...rest] = args;
         const IS_ERROR = 1;
         const IS_OK = 0;
         asyncFun(...rest).then(result => callback(IS_OK, result)).catch(result => {
+            console.log("Got an error from Go scope:")
             // We want a switch for this? Do JS errors go to logs?
             console.error(result)
 
@@ -105,7 +163,42 @@ global[GOLANG_SCOPE] = Object.fromEntries([...Object.entries(golangFunctions)].m
     }];
 }))
 
-addEventListener('fetch', ev => {
+const ws = async req => {
+    /*
+    console.log(req.headers)
+    const h = req.headers.get("upgrade")
+    if(h != "websocket") return new Response("no upgrade", {status: 400}) */
+
+    const [client, server] = Object.values(new WebSocketPair())
+    await handleSession(server)
+
+    return new Response(null, {
+        status: 101,
+        webSocket: client
+    })
+}
+
+async function handleSession(websocket) {
+    websocket.accept()
+    let count = 0
+    websocket.addEventListener("message", async ({ data }) => {
+        if (data === "CLICK") {
+            count += 1
+            websocket.send(JSON.stringify({ count, tz: new Date() }))
+        } else {
+            // An unknown message came into the server. Send back an error message
+            websocket.send(JSON.stringify({ error: "Unknown message received", tz: new Date() }))
+        }
+    })
+
+    websocket.addEventListener("close", async evt => {
+        // Handle when a client closes the WebSocket connection
+        console.log(evt)
+    })
+}
+import wsdemo from './wsdemo';
+
+addEventListener('fetch', (ev: CFEvent) => {
     const requestBlob = serializeReq(ev.request)
     const programOutput = new Promise((resolve, reject) => {
         putHandshake(requestBlob, (response) => {
@@ -114,11 +207,15 @@ addEventListener('fetch', ev => {
     });
 
     const go = new wasmGo.Go()
-   // go.argv.push(requestBlob)
-
     let instance = new WebAssembly.Instance(WASM_MODULE, go.importObject)
 
     ev.respondWith(async function () {
+        if(requestBlob.Pathname == '/ws') {
+            return await ws(ev.request);
+        }
+        if(requestBlob.Pathname == '/ws-demo') {
+            return new Response(wsdemo, {headers: {'content-type': 'text/html'}});
+        }
         let invocation = go.run(instance)
         // Race between program output & Worker limit timeout
         const winner = await Promise.race([programOutput, invocation])

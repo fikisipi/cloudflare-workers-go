@@ -66,8 +66,8 @@ func makeRequestFromJs(reqBlob js.Value) *Request {
 	request.Headers = structs.GetJsMap(reqBlob.Get("Headers"))
 	request.QueryParams = structs.GetJsMap(reqBlob.Get("QueryParams"))
 
-	cfMap := structs.GetJsMap(reqBlob.Get("Cf"))
-	request.Cf = makeCfFromMap(cfMap)
+	//cfMap := structs.GetJsMap(reqBlob.Get("Cf"))
+	//request.Cf = makeCfFromMap(cfMap)
 
 	request._response = new(responseStruct)
 	request._calledRespond = false
