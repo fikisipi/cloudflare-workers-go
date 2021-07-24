@@ -49,11 +49,6 @@ type Request struct {
 	_calledRespond bool
 }
 
-func (r *Request) Respond(body string, options ...ResponseOption) {
-	r._calledRespond = true
-	r._response = buildResponse(body, options...)
-}
-
 func makeRequestFromJs(reqBlob js.Value) *Request {
 	var request = new(Request)
 
@@ -66,11 +61,18 @@ func makeRequestFromJs(reqBlob js.Value) *Request {
 	request.Headers = structs.GetJsMap(reqBlob.Get("Headers"))
 	request.QueryParams = structs.GetJsMap(reqBlob.Get("QueryParams"))
 
-	//cfMap := structs.GetJsMap(reqBlob.Get("Cf"))
-	//request.Cf = makeCfFromMap(cfMap)
+	if !reqBlob.Get("Cf").IsUndefined() {
+		cfMap := structs.GetJsMap(reqBlob.Get("Cf"))
+		request.Cf = makeCfFromMap(cfMap)
+	}
 
 	request._response = new(responseStruct)
 	request._calledRespond = false
 
 	return request
+}
+
+func (r *Request) Respond(body string, options ...ResponseOption) {
+	r._calledRespond = true
+	r._response = buildResponse(body, options...)
 }
