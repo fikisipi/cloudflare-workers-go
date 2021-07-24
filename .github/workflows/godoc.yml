@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-node@v2.3.0
       - run: go install golang.org/x/tools/cmd/godoc
       - run: go install gitlab.com/tslocum/godoc-static
-      - run: godoc-static -destination=./cfgo github.com/fikisipi/cloudflare-workers-go/cfgo
+      - run: "$(go env GOPATH)/bin/godoc-static" -destination=./cfgo github.com/fikisipi/cloudflare-workers-go/cfgo
       - run: 'printf "User-agent: *\nDisallow: /\n" > cfgo/robots.txt'
       - uses: amondnet/vercel-action@v20.0.0
         with:
