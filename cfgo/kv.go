@@ -1,3 +1,4 @@
+//+build js
 package cfgo
 
 import "github.com/fikisipi/cloudflare-workers-go/cfgo/structs"

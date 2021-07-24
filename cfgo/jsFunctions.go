@@ -1,3 +1,4 @@
+//+build js
 package cfgo
 
 import "syscall/js"
