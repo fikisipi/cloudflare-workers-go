@@ -1,13 +1,6 @@
 name: godoc
 
-on:
-  # Triggers the workflow on push or pull request events but only for the master branch
-  push:
-    branches: [ master typescript ]
-  pull_request:
-    branches: [ master ]
-  workflow_dispatch:
-
+on: [ push, workflow_dispatch ]
 jobs:
   godoc:
     runs-on: ubuntu-latest
@@ -19,8 +12,9 @@ jobs:
       - uses: actions/setup-go@v2.1.3
       - uses: actions/setup-node@v2.3.0
       - run: go install golang.org/x/tools/cmd/godoc
-      - run: cd cfgo && "$(go env GOPATH)/bin/godoc" -url "pkg/github.com/fikisipi/cloudflare-workers-go/cfgo/"  | tail +2 | sed 's/lib\/go/\/golang.org\/lib\/go/g' > index.html
-      - run: 'printf "User-agent: *\nDisallow: /\n" > robots.txt'
+      - run: go install gitlab.com/tslocum/godoc-static
+      - run: godoc-static -destination=./cfgo github.com/fikisipi/cloudflare-workers-go/cfgo
+      - run: 'printf "User-agent: *\nDisallow: /\n" > cfgo/robots.txt'
       - uses: amondnet/vercel-action@v20.0.0
         with:
           vercel-token: ${{ secrets.WEB_TOKEN }}
