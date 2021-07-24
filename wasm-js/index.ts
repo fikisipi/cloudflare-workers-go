@@ -1,5 +1,6 @@
 // @ts-ignore
 import wasmGo from './go-1.16/wasm_exec.js'
+import wsdemo from './wsdemo';
 
 declare global {
     class WebSocketPair {
@@ -12,14 +13,17 @@ declare global {
     interface URLSearchParams {
         entries: () => Iterable<[string, string]>;
     }
+    interface Headers {
+        entries(): IterableIterator<[string, string]>;
+    }
     const WASM_MODULE: WebAssembly.Module;
     interface CFEvent extends Event {
-        request: Request;
+        request: CFRequest;
         respondWith: (callback: Promise<any>) => any;
     }
 }
 
-const supportedNamespaces = () => {
+const supportedNamespaces: () => Array<any> = () => {
     return Reflect.ownKeys(global).filter(x => {
         if (x !== 'origin' && typeof global[x] == 'object') {
             return global[x].constructor.name === 'KvNamespace'
@@ -30,10 +34,8 @@ const supportedNamespaces = () => {
 
 const serializeReq = (request: CFRequest) => {
     const url = request.url;
-    let K: ReqCF = null
-    K.asn
     const parsed = new URL(url)
-    const reqObj = {
+    return {
         Body: request.body,
         Cf: request.cf,
         Headers: Object.fromEntries(request.headers.entries()),
@@ -42,8 +44,7 @@ const serializeReq = (request: CFRequest) => {
         Hostname: parsed.hostname,
         Pathname: parsed.pathname,
         QueryParams: Object.fromEntries(parsed.searchParams.entries())
-    }
-    return reqObj;
+    };
 }
 
 interface IncomingCF {
@@ -66,32 +67,39 @@ interface IncomingCF {
     timezone: string,
 }
 
-interface CFRequestInit extends RequestInit {
-    cf: ReqCF
+interface OutgoingCF {
+    apps?: boolean,
+    cacheEverything?: boolean,
+    cacheKey?: string,
+    cacheTtl?: number,
+    cacheTtlByStatus?: {[key: string]: number},
+    minify?: {javascript?: boolean, css?: boolean, html?: boolean},
+    mirage?: boolean,
+    polish?: string,
+    resolveOverride?: string,
+    scrapeShield?: string
 }
 
 interface CFRequest extends Request {
-    constructor: (input: string|CFRequest, init: CFRequestInit) => void;
-    readonly cf: {
-
-    }
+    constructor: (input: string|CFRequest, init?: RequestInit & {cf?: OutgoingCF}) => void;
+    readonly cf: IncomingCF
 }
 
 interface Handshake {
     requestBlob: CFRequest,
-    responseCallback: () => any;
+    responseFunction: () => any;
 }
 
 const handshakeQueue: Array<Handshake> = [];
 
 global['_doHandShake'] = () => {
-    const { requestBlob, responseFunction } = dataQueue.pop();
+    const { requestBlob, responseFunction } = handshakeQueue.pop();
     return { requestBlob, responseFunction };
 }
 
 const putHandshake = (requestBlob, responseFunction) => {
     const handshake = {requestBlob, responseFunction};
-    dataQueue.push(handshake);
+    handshakeQueue.push(handshake);
 }
 
 const WASM_FETCH = '_cfFetch';
@@ -196,7 +204,6 @@ async function handleSession(websocket) {
         console.log(evt)
     })
 }
-import wsdemo from './wsdemo';
 
 addEventListener('fetch', (ev: CFEvent) => {
     const requestBlob = serializeReq(ev.request)
