@@ -14,7 +14,7 @@ jobs:
       - run: go install golang.org/x/tools/cmd/godoc
       - run: go install gitlab.com/tslocum/godoc-static
       - run: "echo \"$(go env GOPATH)/bin\" >> $GITHUB_PATH"
-      - run: "godoc-static -destination=\"$PWD/cfgo\" \"$PWD/cfgo\""
+      - run: "godoc-static -destination=\"$PWD/cfgo\" \"github.com/fikisipi/cloudflare-workers-go\""
       - run: 'printf "User-agent: *\nDisallow: /\n" > cfgo/robots.txt'
       - uses: amondnet/vercel-action@v20.0.0
         with:
@@ -23,4 +23,3 @@ jobs:
           vercel-project-id: prj_Dme7nJ8rpmVzGMAI8WpNsp95QfJo
           vercel-org-id: ${{ secrets.WEB_ORG_ID }}
           working-directory: cfgo
-    
