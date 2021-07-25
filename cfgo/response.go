@@ -1,9 +1,11 @@
-//+build js
+// +build js
+
+// This is some cfgo documentation
+// that I wrote.
 package cfgo
 
 import (
 	"syscall/js"
-	"github.com/fikisipi/cloudflare-workers-go/cfgo/structs"
 )
 
 type responseStruct struct {
@@ -16,7 +18,7 @@ func (response *responseStruct) serialize() js.Value {
 	obj := make(map[string]interface{})
 	obj["StatusCode"] = response.StatusCode
 	obj["Body"] = response.Body
-	obj["Headers"] = structs.CreateJsMap(response.Headers)
+	obj["Headers"] = createJsMap(response.Headers)
 	return js.ValueOf(obj)
 }
 

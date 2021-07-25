@@ -10,16 +10,20 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2.1.3
+        with:
+          go-version: '1.16.2'
       - uses: actions/setup-node@v2.3.0
-      - run: go install golang.org/x/tools/cmd/godoc
-      - run: go install gitlab.com/tslocum/godoc-static
       - run: "echo \"$(go env GOPATH)/bin\" >> $GITHUB_PATH"
-      - run: "godoc-static -destination=\"$PWD/cfgo\" cfgo"
-      - run: 'printf "User-agent: *\nDisallow: /\n" > cfgo/robots.txt'
+      - run: "cd cfgo/docs && go run . > docs.txt"
       - uses: amondnet/vercel-action@v20.0.0
         with:
           vercel-token: ${{ secrets.WEB_TOKEN }}
           vercel-args: -c --prod
           vercel-project-id: prj_Dme7nJ8rpmVzGMAI8WpNsp95QfJo
           vercel-org-id: ${{ secrets.WEB_ORG_ID }}
-          working-directory: cfgo
+          working-directory: "cfgo/docs/src"
+      - run: "echo https://cloudflare-workers-go.vercel.app/ >> cfgo/docs/docs.txt"
+      - uses: actions/upload-artifact@v2.2.4
+        with:
+          name: docs
+          path: "cfgo/docs/docs.txt"

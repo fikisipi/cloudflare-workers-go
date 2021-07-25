@@ -1,9 +1,9 @@
-//+build js
+// +build js
+
 package cfgo
 
 import (
 	"syscall/js"
-	"github.com/fikisipi/cloudflare-workers-go/cfgo/structs"
 )
 
 type RequestCFInfo struct {
@@ -59,11 +59,11 @@ func makeRequestFromJs(reqBlob js.Value) *Request {
 	request.Method = reqBlob.Get("Method").String()
 	request.Pathname = reqBlob.Get("Pathname").String()
 
-	request.Headers = structs.GetJsMap(reqBlob.Get("Headers"))
-	request.QueryParams = structs.GetJsMap(reqBlob.Get("QueryParams"))
+	request.Headers = getJsMap(reqBlob.Get("Headers"))
+	request.QueryParams = getJsMap(reqBlob.Get("QueryParams"))
 
 	if !reqBlob.Get("Cf").IsUndefined() {
-		cfMap := structs.GetJsMap(reqBlob.Get("Cf"))
+		cfMap := getJsMap(reqBlob.Get("Cf"))
 		request.Cf = makeCfFromMap(cfMap)
 	}
 

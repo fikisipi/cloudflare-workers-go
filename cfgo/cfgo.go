@@ -1,22 +1,26 @@
-//+build js
+// +build js
+
 package cfgo
 
 import (
 	"syscall/js"
 	"path"
-	"github.com/fikisipi/cloudflare-workers-go/cfgo/structs"
 )
 
 type FetchBody interface {
 	Get() js.Value
 }
 
-func BodyString(body string) FetchBody {
-	return &structs.StringBody{body}
+type FormStruct struct {
+	body map[string]string
+}
+
+func (s FormStruct) Get() js.Value {
+	return createJsMap(s.body)
 }
 
 func BodyForm(body map[string]string) FetchBody {
-	return &structs.FormBody{body}
+	return &FormStruct{body}
 }
 
 // Fetches any URL using the fetch() Web API. Unlike browsers,
@@ -27,11 +31,12 @@ func BodyForm(body map[string]string) FetchBody {
 //
 // To create a POST/PUT body, use cfgo.BodyForm() or cfgo.BodyString():
 //    Fetch(myURL, "PUT", nil, cfgo.BodyForm(myDict))
-func Fetch(url string, method string, headers map[string]string, requestBody FetchBody) string {
+func Fetch(url string, method string, headers map[string]string,
+	requestBody FetchBody) string {
 	if headers == nil {
 		headers = make(map[string]string)
 	}
-	headersJs := structs.CreateJsMap(headers)
+	headersJs := createJsMap(headers)
 
 	bodyJs := js.Null()
 	if requestBody != nil {
@@ -96,4 +101,5 @@ func (h *routeHandler) Run() {
 	responseCallback.Invoke(rawResp)
 }
 
+// Router Blah blah
 var Router = routeHandler{}

@@ -1,9 +1,10 @@
-//+build js
-package structs
+// +build js
+
+package cfgo
 
 import "syscall/js"
 
-func CreateJsMap(sMap map[string]string) js.Value {
+func createJsMap(sMap map[string]string) js.Value {
 	/* JS syscalls cannot work with map[string]string
 	or any map[string]T as well.
 
@@ -18,7 +19,7 @@ func CreateJsMap(sMap map[string]string) js.Value {
 	return js.ValueOf(interfaceMap)
 }
 
-func GetJsMap(value js.Value) map[string]string {
+func getJsMap(value js.Value) map[string]string {
 	m := make(map[string]string)
 	entries := js.Global().Get("Object").Call("entries", value)
 	for i := 0; i < entries.Length(); i++ {
