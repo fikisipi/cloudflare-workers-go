@@ -12,18 +12,10 @@ jobs:
       - uses: actions/setup-go@v2.1.3
         with:
           go-version: '1.16.2'
-      - uses: actions/setup-node@v2.3.0
       - run: "echo \"$(go env GOPATH)/bin\" >> $GITHUB_PATH"
       - run: "cd cfgo/docs && go run . > docs.txt"
-      - uses: amondnet/vercel-action@v20.0.0
-        with:
-          vercel-token: ${{ secrets.WEB_TOKEN }}
-          vercel-args: -c --prod
-          vercel-project-id: prj_Dme7nJ8rpmVzGMAI8WpNsp95QfJo
-          vercel-org-id: ${{ secrets.WEB_ORG_ID }}
-          working-directory: "cfgo/docs/src"
-      - run: "echo https://cloudflare-workers-go.vercel.app/ >> cfgo/docs/docs.txt"
+      - run: "echo https://cloudflare-workers-go.vercel.app/"
       - uses: actions/upload-artifact@v2.2.4
         with:
           name: docs
-          path: "cfgo/docs/docs.txt"
+          path: "cfgo/docs/src/"
