@@ -1,3 +1,5 @@
+//go:generate wget https://github.com/fikisipi/cloudflare-workers-go/releases/download/0.0.1/pkged.go
+
 package main
 
 import (
