@@ -13,8 +13,7 @@ jobs:
         with:
           go-version: '1.16.2'
       - run: "echo \"$(go env GOPATH)/bin\" >> $GITHUB_PATH"
-      - run: "cd cfgo/docs && go run . > docs.txt"
-      - run: "echo https://cloudflare-workers-go.vercel.app/"
+      - run: "cd cfgo/docs && go generate && go run ."
       - uses: actions/upload-artifact@v2.2.4
         with:
           name: docs
